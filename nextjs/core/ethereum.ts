@@ -7,31 +7,12 @@ import Greeter from "../resources/hardhat/artifacts/contracts/Greeter.sol/Greete
 import DeployedMetadata from "../resources/hardhat/deployedMeta.json"
 import { useEffect, useState } from 'react';
 
-export const hasMetamask = async () => {
-    const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
-
-    return Boolean(provider);
-};
-
-export const isConnected = async () => {
-    const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
-
-    if (!provider) {
-        return undefined
-    }
-    let accounts = await provider.request({ method: "eth_accounts" }) as any
-    if (!accounts) {
-        return false
-    }
-    return accounts.length > 0;
+export const getProcessEnvChain = (): CHAIN => {
+    const chainId = process.env.NEXT_PUBLIC_CHAIN_ID;
+    if (!chainId) return CHAIN.UNKNOWN
+    if (isNaN(Number(chainId))) return CHAIN.UNKNOWN
+    return chainIntToChainEnum(Number(chainId))
 }
-
-export const requestConnectWallet = async () => {
-    const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
-    if (provider) {
-        await provider.request({ method: "eth_requestAccounts" });
-    }
-};
 
 const chainIntToChainEnum = (chainInt: number): CHAIN => {
     if (chainInt in CHAIN) {
@@ -41,23 +22,10 @@ const chainIntToChainEnum = (chainInt: number): CHAIN => {
     }
 }
 
-export const getCurrentChain = async () => {
+export const requestConnectWallet = async () => {
     const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
-
     if (provider) {
-        let chain = await provider.request({ method: "eth_chainId" }) as string;
-
-        return chainIntToChainEnum(parseInt(chain, 16));
-    }
-};
-
-export const onChainChanged = async (callback: (chainId: CHAIN) => void) => {
-    const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
-
-    if (provider) {
-        provider.on("chainChanged", (chainId) => {
-            callback(chainIntToChainEnum(parseInt(chainId as string, 16)));
-        });
+        await provider.request({ method: "eth_requestAccounts" });
     }
 };
 
@@ -104,45 +72,54 @@ export const useDappStatus = () => {
     const setAccountStatus = async (accounts: any) => {
         if (!accounts || accounts.length <= 0) {
             setConnectionStatus(CONNECTION_STATUS.NOT_CONNECTED)
+            setConnectedAccount(undefined)
         } else {
             setConnectionStatus(CONNECTION_STATUS.CONNECTED)
             setConnectedAccount(accounts[0])
         }
     }
 
-    // TODO - can probably optimise this hook. Currently runs with each state update
     useEffect(() => {
         const effect = async () => {
             const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
+
+            // return if no provider
             if (!provider) {
                 setConnectionStatus(CONNECTION_STATUS.NO_PROVIDER)
-            } else {
-                // initial connection and account status
-                let accounts = await provider.request({ method: "eth_accounts" }) as any
-                await setAccountStatus(accounts)
-                // subscribe to connection and account status
-                provider.on("accountsChanged", async (accounts: any) => {
-                    await setAccountStatus(accounts)
-                });
-
-                // get current chain
-                let chain = await provider.request({ method: "eth_chainId" }) as string;
-                setCurrentChain(chainIntToChainEnum(parseInt(chain, 16)))
-
-                onChainChanged((chain) => { setCurrentChain(chain) })
+                return
             }
+
+            // initial connection and account status
+            let accounts = await provider.request({ method: "eth_accounts" }) as any
+            await setAccountStatus(accounts)
+            // subscribe to connection and account status
+            console.log("creating accountsChanged listener")
+            provider.on("accountsChanged", async (accounts: any) => {
+                console.log("account change")
+                await setAccountStatus(accounts)
+            });
+
+            // get current chain
+            let chain = await provider.request({ method: "eth_chainId" }) as string;
+            setCurrentChain(chainIntToChainEnum(parseInt(chain, 16)))
+
+            console.log("creating chainChanged listener")
+            provider.on("chainChanged", (chainId) => {
+                console.log("chain change")
+                setCurrentChain(chainIntToChainEnum(parseInt(chainId as string, 16)))
+            });
         }
         effect()
-    })
+    }, [])
 
     useEffect(() => {
-        if (currentChain && connectedAccount) {
-            const effect = async () => {
-                const blockchain = await getBlockchain()
-                setDapp(blockchain)
-            }
-            effect()
+        // if (currentChain && connectedAccount) {
+        const effect = async () => {
+            const blockchain = await getDappAPIs(connectedAccount)
+            setDapp(blockchain)
         }
+        effect()
+        // }
     }, [connectedAccount, currentChain])
 
     return {
@@ -156,34 +133,52 @@ export const useDappStatus = () => {
 }
 
 interface DappAPIs {
-    provider: ethers.providers.Web3Provider,
-    greeter: GreeterContract
+    isViewOnly: boolean,
+    signer: ethers.providers.JsonRpcSigner | undefined,
+    greeter: GreeterContract,
 }
 
-export const getBlockchain = async (): Promise<DappAPIs | undefined> => {
+export const getDappAPIs = async (connectedAccount: string | undefined): Promise<DappAPIs | undefined> => {
+    const chain = getProcessEnvChain()
+    const chainConfig = getChainConfig(chain)
+    if (!chainConfig) {
+        throw "Internal chain config error - no chain config found"
+    }
+
+    // if user is connected and on the correct chain, use their signer. Else use a default provider
+    let isViewOnly = true
+    let providerOrSigner: ethers.providers.Provider | ethers.Signer = ethers.getDefaultProvider(chainConfig.rpcUrls[0])
     const ethProvider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
-
     if (ethProvider) {
-        try {
-            await ethProvider.request({ method: "eth_requestAccounts" });
-            const provider = new ethers.providers.Web3Provider(ethProvider as any);
-            const signer = provider.getSigner();
+        let provider = new ethers.providers.Web3Provider(ethProvider as any);
+        const signer = provider.getSigner()
+        const userChainId = Number(ethProvider.networkVersion).toString()
+        const userChain = chainIntToChainEnum(Number(userChainId))
 
-            let networkNum = Number(ethProvider.networkVersion).toString()
-
-            const greeter = new Contract(
-                (DeployedMetadata.Greeter as any)[networkNum].address,
-                Greeter.abi,
-                signer
-            ) as GreeterContract
-
-            return {
-                provider: provider,
-                greeter: greeter
-            }
-        } catch (e: any) {
-            console.error(e)
-            return undefined
+        if (connectedAccount && userChain !== CHAIN.UNKNOWN && userChain === getProcessEnvChain()) {
+            console.log("using user ethereum provider")
+            providerOrSigner = signer
+            isViewOnly = false
+        } else {
+            console.log("using default provider")
+            isViewOnly = true
         }
+    }
+
+    try {
+        const greeter = new Contract(
+            (DeployedMetadata.Greeter as any)[chain].address,
+            Greeter.abi,
+            providerOrSigner
+        ) as GreeterContract
+
+        return {
+            isViewOnly: isViewOnly,
+            signer: isViewOnly ? providerOrSigner as ethers.providers.JsonRpcSigner : undefined,
+            greeter
+        }
+    } catch (e: any) {
+        console.error(e)
+        return undefined
     }
 }

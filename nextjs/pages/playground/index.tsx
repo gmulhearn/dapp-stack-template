@@ -23,17 +23,22 @@ const Playground = () => {
   const [greetingInput, setGreetingInput] = useState<string | undefined>(undefined)
   const [setGreetingLoading, setSetGreetingLoading] = useState(false)
 
+  const getGreetingClicked = async () => {
+    if (!dappAPI) return
+    setGreeting(await dappAPI.greeter.greet())
+  }
+
   const setGreetingClicked = async () => {
-    if (greetingInput && dappAPI) {
-      setSetGreetingLoading(true)
-      try {
-        const tx = await dappAPI.greeter.setGreeting(greetingInput)
-        await tx.wait()
-      } catch (e) {
-        console.error(e)
-      }
-      setSetGreetingLoading(false)
+    if (!greetingInput || !dappAPI) return
+    setSetGreetingLoading(true)
+    try {
+      const tx = await dappAPI.greeter.setGreeting(greetingInput)
+      await tx.wait()
+    } catch (e) {
+      console.error(e)
     }
+    setSetGreetingLoading(false)
+
   }
 
   return (
@@ -45,18 +50,20 @@ const Playground = () => {
             <Heading textAlign="center" size="md">Greeter Contract</Heading>
             <Flex justifyContent="center" m={3} flexDirection="column">
               <Text align="center">Greeting: {greeting}</Text>
-              <Button mt={3} onClick={async () => { setGreeting(await dappAPI.greeter.greet()) }}>
-                Greet
+              <Button mt={3}
+                onClick={getGreetingClicked}
+              >
+                Get Greeting
               </Button>
               <Input mt={6} onChange={(e) => { setGreetingInput(e.target.value) }}>
 
               </Input>
-              <Button mt={3} onClick={setGreetingClicked}>
-                {setGreetingLoading ? (
-                  <ButtonSpinner />
-                ) : (
-                  "Set Greeting"
-                )}
+              <Button mt={3} 
+              onClick={setGreetingClicked} 
+              isLoading={setGreetingLoading}
+              disabled={dappAPI.isViewOnly}
+              >
+                Set Greeting
               </Button>
             </Flex>
           </PlaygroundCard>

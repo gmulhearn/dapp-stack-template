@@ -2,25 +2,24 @@ import {
     Box,
     Flex,
     Avatar,
-    Link,
     Button,
     Menu,
     MenuButton,
     MenuList,
     MenuItem,
     MenuDivider,
-    useDisclosure,
     useColorModeValue,
     Stack,
     useColorMode,
     Center,
-    ColorMode,
     IconButton,
     Text,
 } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
-import React, { useEffect } from 'react';
-import { CONNECTION_STATUS, useDappStatus } from '../core/ethereum';
+import React from 'react';
+import { CONNECTION_STATUS, getProcessEnvChain, useDappStatus } from '../core/ethereum';
+import HandymanIcon from '@mui/icons-material/Handyman';
+import Link from 'next/link';
 
 const Navbar = () => {
 
@@ -34,9 +33,11 @@ const Navbar = () => {
         connectionStatus,
         requestConnectWallet,
         connectedAccount,
-        currentChain,
         requestSwitchChain,
+        currentChain
     } = useDappStatus()
+
+    const DESIRED_CHAIN = getProcessEnvChain()
 
     return (
         <Box bg={useColorModeValue('toolbarSurfaceLight', 'toolbarSurfaceDark')} px={4} as="nav" position="sticky" zIndex={10} top={0} borderBottom="1px" borderBottomColor={useColorModeValue('gray.300', 'gray.700')}>
@@ -45,6 +46,13 @@ const Navbar = () => {
 
                 <Flex alignItems={'center'}>
                     <Stack direction={'row'} spacing={7}>
+                        <Link href="/playground">
+                            <IconButton
+                                aria-label="Playground"
+                                icon={<HandymanIcon />}
+                                color={iconColor[colorMode]}
+                            />
+                        </Link>
                         <IconButton
                             aria-label="Toggle dark mode"
                             icon={useColorModeValue(<SunIcon />, <MoonIcon />)}
@@ -52,36 +60,42 @@ const Navbar = () => {
                             color={iconColor[colorMode]}
                         />
                         {connectionStatus === CONNECTION_STATUS.CONNECTED ? (
-                            <Menu>
-                                <MenuButton
-                                    as={Button}
-                                    rounded={'full'}
-                                    variant={'link'}
-                                    cursor={'pointer'}
-                                    minW={0}>
-                                    <Avatar
-                                        size={'sm'}
-                                        src={'https://avatars.dicebear.com/api/male/username.svg'}
-                                    />
-                                </MenuButton>
-                                <MenuList alignItems={'center'}>
-                                    <br />
-                                    <Center>
+                            currentChain === DESIRED_CHAIN ? (
+                                <Menu>
+                                    <MenuButton
+                                        as={Button}
+                                        rounded={'full'}
+                                        variant={'link'}
+                                        cursor={'pointer'}
+                                        minW={0}>
                                         <Avatar
-                                            size={'2xl'}
+                                            size={'sm'}
                                             src={'https://avatars.dicebear.com/api/male/username.svg'}
                                         />
-                                    </Center>
-                                    <br />
-                                    <Center>
-                                        <p>{connectedAccount}</p>
-                                    </Center>
-                                    <br />
-                                    <MenuDivider />
-                                    <MenuItem>Account Settings</MenuItem>
-                                    <MenuItem>Disconnect</MenuItem>
-                                </MenuList>
-                            </Menu>
+                                    </MenuButton>
+                                    <MenuList alignItems={'center'}>
+                                        <br />
+                                        <Center>
+                                            <Avatar
+                                                size={'2xl'}
+                                                src={'https://avatars.dicebear.com/api/male/username.svg'}
+                                            />
+                                        </Center>
+                                        <br />
+                                        <Center>
+                                            <p>{connectedAccount}</p>
+                                        </Center>
+                                        <br />
+                                        <MenuDivider />
+                                        <MenuItem>Account Settings</MenuItem>
+                                        <MenuItem>Disconnect</MenuItem>
+                                    </MenuList>
+                                </Menu>
+                            ) : (
+                                <Button onClick={() => { requestSwitchChain(DESIRED_CHAIN) }}>
+                                    Switch Chain
+                                </Button>
+                            )
                         ) : (
                             <Button onClick={requestConnectWallet}>
                                 Connect Wallet

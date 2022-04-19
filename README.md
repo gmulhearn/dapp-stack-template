@@ -1,46 +1,78 @@
-# Advanced Sample Hardhat Project
+# DApp Stack Template
+The following project is designed to make bootstrapping EVM-based decentralized web applications as painless as possible. This project has the following stack:
+* **Smart Contract Dev Framework:** Hardhat
+* **Web Framework:** NextJS (TypeScript)
+* **UI Framework:** Chakra-UI
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+# Set Up / Configure
+Install packages from root dir and within `nextjs` via `npm install`
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
-
-Try running some of the following tasks:
-
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
+To run any hardhat processes, a mnenomic seed must be provided in your `.env` file. Create a `.env` file in the root directory with the following contents:
+```
+MNEMONIC=<12-24 word mnemonic seed phrase>
 ```
 
-# Etherscan verification
-
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
-
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
-
-```shell
-hardhat run --network ropsten scripts/deploy.ts
+For the sake of this guide, you should install hardhat shorthand:
+```
+npm i -g hardhat-shorthand
 ```
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+To configure your desired deployment chains, update the `NEXT_PUBLIC_CHAIN_ID` variable within `.env.development` and `.env.production`. They are currently configured for localhost in development (i.e. via `npm run dev`) and avax testnet in production (i.e. via `npm start`).
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
+# Work Flow Guide
+## Smart Contract Development
+The root of the project follows a standard hardhat file structure:
+* `contracts`: Your Solidity smart contracts
+* `scripts`: Scripts to run against your smart contracts or to deploy your smart contracts
+* `typechain`: The generated types for your smart contracts
+* `test`: Chai testing suite 
+* `hardhat.config.ts`: Hardhat configuration file - can add new networks in here
+
+### Contracts
+First create your smart contracts within the `contracts` directory. An example `Greeter.sol` is provided. You can compile all contracts within `contracts` by running `hh compile` from the root. This will generate the typechain typing.
+
+### Local Deployment
+Hardhat allows you to run a localhost EVM chain which you can deploy your contracts to for testing. To run the EVM chain, execute `hh node` in a seperate terminal.
+
+Next to deploy your smart contracts, run the `deploy.ts` script targetting the `localhost` network:
+```
+hh run --network localhost scripts/deploy.ts
 ```
 
-# Performance optimizations
+Currently this script is set to just deploy the `Greeter.sol` contract. To deploy your other contracts, you'll need to add them into the `deploy.ts` script - just follow the pattern seen for `Greeter`.
 
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+The `deploy.ts` script will also update a JSON metadata file within the `nextjs` project with information about the deployed contracts. This occurs during:
+```js
+updateDeployedContractData("Greeter", chainId, greeter.address)
+```
+
+For each contract you deploy, you should run this function to ensure the frontend has the most recently instance of your contracts.
+
+This will also generate the contract JSON ABI within `nextjs/resources/hardhat/artifacts`, which is then used by the frontend to connect with the contracts.
+
+### Testing
+You should ofcourse test all your Smart Contracts. This can be done by adding new scripts to the `test` directory. Copy the pattern shown in `index.ts` to get started.
+
+## Front End
+### Chain/Contract Interactions
+The front end uses the user's ethereum provider (metamask) to interact with smart contracts, or a default provider if a user does no have a provider installed/connected (view only though). 
+
+A custom hook has been written within `core/ethereum.ts`, `useDappStatus()` to provide core automatically updating variables and functions required for DApps.
+The `useDappStatus` hook provides the following:
+* `connectionStatus`: an enum describing whether the user as an ethereum provider connected or not.
+* `connectedAccount`: a string hex address of the ethereum provider account connected (if any).
+* `currentChain`: an enum of the current chain connected on the users ethereum provider (if any and if known).
+* `requestConnectWallet`: a function which will request the user's ethereum provider to connect (if any).
+* `requestSwitchChain`: a function which will request the user's ethereum provider to switch to the desired chain (if any).
+* `dappAPI`: a object containing:
+    * `signer`: the user's ethereum provider's signer account (if any). Used for signing messages if required.
+    * `isViewOnly`: whether the DApp APIs can only be used for viewing (or if writing transactions is allowed to). View only is the case when a default provider is used instead of a user's ethereum provider.
+    * `greeter`: An API for the `Greeter` smart contract on the desired chain with the given provider (either the user's ethereum provider or a default view-only provider). This is the main entry into smart contract interactions. See `nextjs/pages/playground/..` for example usages.
+
+As you create new contracts, you should add them as a property to `dappAPI` copying the pattern in which it is done for the `dappAPI.greeter` property.
+
+### Playground
+A useful way to test smart contract interactions is through a dedicated playground/sandbox environment. One has been set up under `nextjs/pages/playground/..`. Following the same pattern as the existing `PlaygroundCard`, you can add additional cards to test and interact with your new contracts (which you should have added to the `dappAPI` object, see above ^).
+
+### Navbar
+A default navbar has been created within `nextjs/components/Navbar.tsx`. This navbar uses the `useDappStatus` hook to respond to connection and chain status changes. It also shows how the hook can be used to request connection and request chain switches.

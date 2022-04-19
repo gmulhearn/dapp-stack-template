@@ -3,6 +3,7 @@ export enum CHAIN {
     MUMBAI = 80001,
     ONE_TEST = 1666700000,
     ONE = 1666600000,
+    AVAX_TEST = 43113,
     UNKNOWN = -1
 }
 
@@ -16,6 +17,18 @@ interface ChainConfig {
     },
     rpcUrls: string[],
     blockExplorerUrls: string[]
+}
+
+export const LOCAL_CHAIN_CONFIG: ChainConfig = {
+    chainId: "0x7A69",
+    chainName: "Localhost 8545",
+    nativeCurrency: {
+        name: "Eth",
+        symbol: "ETH",
+        decimals: 18
+    },
+    rpcUrls: ["http://localhost:8545"],
+    blockExplorerUrls: ["http://localhost:8545"]
 }
 
 export const MUMBAI_CHAIN_CONFIG: ChainConfig = {
@@ -42,12 +55,28 @@ export const ONE_TEST_CHAIN_CONFIG: ChainConfig = {
     blockExplorerUrls: ["https://explorer.pops.one/"]
 }
 
+export const AVAX_TEST_CHAIN_CONFIG: ChainConfig = {
+    chainId: "0xa869",
+    chainName: "Avalanche Fuji Testnet",
+    nativeCurrency: {
+        name: "Avalanche",
+        symbol: "AVAX",
+        decimals: 18
+    },
+    rpcUrls: ["https://api.avax-test.network/ext/bc/C/rpc"],
+    blockExplorerUrls: ["https://testnet.snowtrace.io/"]
+}
+
 export const getChainConfig = (chain: CHAIN): ChainConfig | undefined => {
     switch (chain) {
+        case CHAIN.LOCAL:
+            return LOCAL_CHAIN_CONFIG;
         case CHAIN.MUMBAI:
             return MUMBAI_CHAIN_CONFIG;
         case CHAIN.ONE_TEST:
             return ONE_TEST_CHAIN_CONFIG;
+        case CHAIN.AVAX_TEST:
+            return AVAX_TEST_CHAIN_CONFIG;
         default:
             return undefined;
     }
