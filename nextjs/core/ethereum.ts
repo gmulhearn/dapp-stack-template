@@ -174,7 +174,7 @@ export const getDappAPIs = async (connectedAccount: string | undefined): Promise
 
         return {
             isViewOnly: isViewOnly,
-            signer: isViewOnly ? providerOrSigner as ethers.providers.JsonRpcSigner : undefined,
+            signer: isViewOnly ? undefined : providerOrSigner as ethers.providers.JsonRpcSigner,
             greeter
         }
     } catch (e: any) {
