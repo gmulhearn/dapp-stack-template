@@ -31,9 +31,10 @@ const Navbar = () => {
 
     const {
         connectionStatus,
-        requestConnectWallet,
+        requestConnectWalletMetaMask: requestConnectWallet,
+        requestConnectWalletConnect,
         connectedAccount,
-        requestSwitchChain,
+        switchOrAddChainMetaMask: requestSwitchChain,
         currentChain
     } = useDappStatus()
 
@@ -97,7 +98,7 @@ const Navbar = () => {
                                 </Button>
                             )
                         ) : (
-                            <Button onClick={requestConnectWallet}>
+                            <Button onClick={requestConnectWalletConnect}>
                                 Connect Wallet
                             </Button>
                         )}

@@ -1,11 +1,12 @@
 import { Greeter as GreeterContract } from './../../typechain/Greeter.d';
-import { CHAIN, getChainConfig } from './../config/chains';
+import { AVAX_TEST_CHAIN_CONFIG, CHAIN, getChainConfig, LOCAL_CHAIN_CONFIG } from './../config/chains';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Contract } from 'ethers';
 import Greeter from "../resources/hardhat/artifacts/contracts/Greeter.sol/Greeter.json";
 import DeployedMetadata from "../resources/hardhat/deployedMeta.json"
 import { useEffect, useState } from 'react';
+import WalletConnectProvider from "@walletconnect/web3-provider";
 
 export const getProcessEnvChain = (): CHAIN => {
     const chainId = process.env.NEXT_PUBLIC_CHAIN_ID;
@@ -22,14 +23,25 @@ const chainIntToChainEnum = (chainInt: number): CHAIN => {
     }
 }
 
-export const requestConnectWallet = async () => {
+export const requestConnectWalletMetaMask = async () => {
     const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
     if (provider) {
         await provider.request({ method: "eth_requestAccounts" });
     }
 };
 
-export const switchOrAddChain = async (chain: CHAIN) => {
+export const requestConnectWalletConnect = async () => {
+    const provider = new WalletConnectProvider({
+        rpc: {
+            31337: LOCAL_CHAIN_CONFIG.rpcUrls[0],
+            43113: AVAX_TEST_CHAIN_CONFIG.rpcUrls[0]
+        }
+    })
+
+    await provider.enable();
+}
+
+export const switchOrAddChainMetaMask = async (chain: CHAIN) => {
     const provider = await detectEthereumProvider() as MetaMaskInpageProvider | undefined;
 
     if (provider) {
@@ -124,10 +136,11 @@ export const useDappStatus = () => {
 
     return {
         connectionStatus,
-        requestConnectWallet,
+        requestConnectWalletMetaMask,
+        requestConnectWalletConnect,
         connectedAccount,
         currentChain,
-        requestSwitchChain: switchOrAddChain,
+        switchOrAddChainMetaMask,
         dappAPI: dapp
     }
 }
