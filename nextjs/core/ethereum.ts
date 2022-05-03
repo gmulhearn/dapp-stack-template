@@ -183,7 +183,7 @@ export const getDappAPIs = async (connectedAccount: string | undefined): Promise
             (DeployedMetadata.Greeter as any)[chain].address,
             Greeter.abi,
             providerOrSigner
-        ) as GreeterContract
+        ) as unknown as GreeterContract
 
         return {
             isViewOnly: isViewOnly,
