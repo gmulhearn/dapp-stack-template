@@ -42,6 +42,13 @@ const config: HardhatUserConfig = {
       },
       chainId: 31337
     },
+    avaxTest: {
+      url: process.env.AVAX_TEST_RPC,
+      accounts: {
+        mnemonic: process.env.MNEMONIC
+      },
+      chainId: 43113
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
       accounts:
