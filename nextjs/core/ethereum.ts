@@ -34,18 +34,18 @@ export const requestConnectWalletMetaMask = async () => {
     }
 };
 
-const walletConnectProvider = new WalletConnectProvider({
+const walletConnectProviderInput = {
     rpc: {
         31337: LOCAL_CHAIN_CONFIG.rpcUrls[0],
         43113: AVAX_TEST_CHAIN_CONFIG.rpcUrls[0]
     },
     chainId: getProcessEnvChain()
-})
+}
+let walletConnectProvider = new WalletConnectProvider(walletConnectProviderInput)
 
 export const requestConnectWalletConnect = async () => {
-
+    walletConnectProvider = new WalletConnectProvider(walletConnectProviderInput)
     await walletConnectProvider.enable();
-
     return walletConnectProvider
 }
 

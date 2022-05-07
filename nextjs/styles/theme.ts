@@ -1,8 +1,5 @@
-import { extendTheme, useColorModeValue, type ThemeConfig, type ColorMode, DefaultIcon, theme as baseTheme } from "@chakra-ui/react"
-import chakraUiTheme from "@chakra-ui/theme"
+import { extendTheme, type ThemeConfig, type ColorMode, theme as baseTheme } from "@chakra-ui/react"
 import { StyleConfig } from "@chakra-ui/theme-tools"
-import { withTheme } from "@emotion/react"
-
 
 const config: ThemeConfig = {
   initialColorMode: 'light',
