@@ -1,6 +1,6 @@
 import { Button, Flex, HStack, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Text, Wrap } from '@chakra-ui/react'
 import React from 'react'
-import { WALLET_TYPE } from '../core/ethereum'
+import { WALLET_TYPE } from '../core/ethereum/ethereum'
 
 const WalletSelectModal = ({ isOpen, onClose, onSelectWalletType }: { isOpen: boolean, onClose: () => void, onSelectWalletType: (type: WALLET_TYPE) => void }) => {
     return (

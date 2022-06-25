@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import React from 'react';
-import { CONNECTION_STATUS, CONNECTION_TYPE, getProcessEnvChain, useDappStatus, WALLET_TYPE } from '../core/ethereum';
+import { CONNECTION_STATUS, CONNECTION_TYPE, getProcessEnvChain, useDappStatus, WALLET_TYPE } from '../core/ethereum/ethereum';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import Link from 'next/link';
 import WalletSelectModal from './WalletSelectModal';

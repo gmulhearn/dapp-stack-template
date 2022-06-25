@@ -1,14 +1,15 @@
-import { Greeter as GreeterContract } from './../../typechain/Greeter.d';
-import { AVAX_TEST_CHAIN_CONFIG, CHAIN, getChainConfig, LOCAL_CHAIN_CONFIG } from './../config/chains';
+import { Greeter as GreeterContract } from '../../../typechain/Greeter';
+import { AVAX_TEST_CHAIN_CONFIG, CHAIN, getChainConfig, LOCAL_CHAIN_CONFIG } from '../../config/chains';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Contract } from 'ethers';
-import Greeter from "../resources/hardhat/artifacts/contracts/Greeter.sol/Greeter.json";
-import DeployedMetadata from "../resources/hardhat/deployedMeta.json"
+import Greeter from "../../resources/hardhat/artifacts/contracts/Greeter.sol/Greeter.json";
+import DeployedMetadata from "../../resources/hardhat/deployedMeta.json"
 import { useEffect, useState } from 'react';
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import Cookie from 'js-cookie'
 import { singletonHook } from 'react-singleton-hook';
+import { DappAPIs, getDappAPI } from './dappAPIs';
 
 export const getProcessEnvChain = (): CHAIN => {
     const chainId = process.env.NEXT_PUBLIC_CHAIN_ID;
@@ -161,13 +162,13 @@ const getProviderForConnectionType = async (connectionType: CONNECTION_TYPE): Pr
     return { providerOrSigner, type }
 }
 
-enum PROVIDER_TYPE {
+export enum PROVIDER_TYPE {
     METAMASK = "METAMASK",
     WALLET_CONNECT = "WALLET_CONNECT",
     DEFAULT = "DEFAULT"
 }
 
-interface DAppProvider {
+export interface DAppProvider {
     providerOrSigner: ethers.providers.Provider | ethers.Signer,
     type: PROVIDER_TYPE
 }
@@ -311,44 +312,12 @@ const useDappStatusImpl = () => {
     }
 }
 
-const voidFn = async (x: any) => { }
 export const useDappStatus = singletonHook({
     connectionStatus: undefined,
     connectionType: CONNECTION_TYPE.NONE,
-    requestConnectWallet: voidFn,
+    requestConnectWallet: async (_: any) => { },
     connectedAccount: undefined,
     currentChain: undefined,
     switchOrAddChainMetaMask: switchOrAddChainMetaMask,
     dappAPI: undefined
 }, useDappStatusImpl);
-
-interface DappAPIs {
-    isViewOnly: boolean,
-    signer: ethers.providers.JsonRpcSigner | undefined,
-    greeter: GreeterContract,
-}
-const getDappAPI = (dAppProvider: DAppProvider) => {
-    const isViewOnly = dAppProvider.type === PROVIDER_TYPE.DEFAULT
-
-    const chain = getProcessEnvChain()
-    const chainConfig = getChainConfig(chain)
-    if (!chainConfig) {
-        throw "Internal chain config error - no chain config found"
-    }
-    try {
-        const greeter = new Contract(
-            (DeployedMetadata.Greeter as any)[chain].address,
-            Greeter.abi,
-            dAppProvider.providerOrSigner
-        ) as unknown as GreeterContract
-
-        return {
-            isViewOnly: isViewOnly,
-            signer: isViewOnly ? undefined : dAppProvider.providerOrSigner as ethers.providers.JsonRpcSigner,
-            greeter
-        }
-    } catch (e: any) {
-        console.error(e)
-        return undefined
-    }
-}

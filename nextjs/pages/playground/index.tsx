@@ -1,7 +1,7 @@
 import { Box, Button, ButtonSpinner, CircularProgress, Flex, Heading, Input, Spinner, Text, useStyleConfig, Wrap } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import PageContainer from '../../components/PageContainer';
-import { useDappStatus } from '../../core/ethereum';
+import { useDappStatus } from '../../core/ethereum/ethereum';
 
 const PlaygroundCard = ({ children }: { children?: JSX.Element | JSX.Element[] }) => {
   const styles = useStyleConfig('Card')
