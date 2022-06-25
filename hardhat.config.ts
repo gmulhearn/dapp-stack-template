@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
       chainId: 31337
     },
     avaxTest: {
-      url: process.env.AVAX_TEST_RPC,
+      url: process.env.AVAX_TEST_RPC || "https://api.avax-test.network/ext/bc/C/rpc",
       accounts: {
         mnemonic: process.env.MNEMONIC
       },
