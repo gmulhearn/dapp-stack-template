@@ -1,9 +1,9 @@
 import { Contract, ethers } from "ethers"
 import { getChainConfig } from "../../config/chains"
 import { DAppProvider, getProcessEnvChain, PROVIDER_TYPE } from "./ethereum"
-import Greeter from "../../resources/hardhat/artifacts/contracts/Greeter.sol/Greeter.json";
-import { Greeter as GreeterContract } from '../../../typechain/Greeter';
-import DeployedMetadata from "../../resources/hardhat/deployedMeta.json"
+import Greeter from "@hardhat-contracts/Greeter.sol/Greeter.json";
+import { Greeter as GreeterContract } from '@typechain/Greeter';
+import DeployedMetadata from "@hardhat-resources/deployedMeta.json"
 
 export interface DappAPIs {
     isViewOnly: boolean,
