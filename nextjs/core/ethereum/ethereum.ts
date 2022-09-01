@@ -1,10 +1,7 @@
-import { Greeter as GreeterContract } from '../../../typechain/Greeter';
 import { AVAX_TEST_CHAIN_CONFIG, CHAIN, getChainConfig, LOCAL_CHAIN_CONFIG } from '../../config/chains';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { MetaMaskInpageProvider } from "@metamask/providers";
-import { ethers, Contract } from 'ethers';
-import Greeter from "../../resources/hardhat/artifacts/contracts/Greeter.sol/Greeter.json";
-import DeployedMetadata from "../../resources/hardhat/deployedMeta.json"
+import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import Cookie from 'js-cookie'
