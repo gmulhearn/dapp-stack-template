@@ -16,9 +16,10 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@hardhat-resources/*": ["resources/hardhat/*"],
-      "@hardhat-contracts/*": ["resources/hardhat/artifacts/contracts/*"],
-      "@typechain/*": ["../typechain/*"]
+      "@artifacts/*": ["../artifacts/*"],
+      "@hardhat-resources/*": ["../artifacts/hardhat/*"],
+      "@hardhat-contracts/*": ["../artifacts/hardhat/contracts/*"],
+      "@typechain/*": ["../artifacts/typechain/*"]
     } 
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

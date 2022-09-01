@@ -3,11 +3,12 @@ The following project is designed to make bootstrapping EVM-based decentralized 
 * **Smart Contract Dev Framework:** Hardhat
 * **Web Framework:** NextJS (TypeScript)
 * **UI Framework:** Chakra-UI
+* **EVM Interaction Framework:** Ethers with Typechain
 
 # Set Up / Configure
-Install packages from root dir and within `nextjs` via `npm install`
+Install packages with `hardhat` and `nextjs` via `npm install`
 
-To run any hardhat processes, a mnenomic seed must be provided in your `.env` file. Create a `.env` file in the root directory with the following contents:
+To run any hardhat processes, a mnenomic seed must be provided in your `hardhat/.env` file. Create a `.env` file in the `hardhat` directory with the following contents:
 ```
 MNEMONIC=<12-24 word mnemonic seed phrase>
 ```
@@ -21,15 +22,18 @@ To configure your desired deployment chains, update the `NEXT_PUBLIC_CHAIN_ID` v
 
 # Work Flow Guide
 ## Smart Contract Development
-The root of the project follows a standard hardhat file structure:
+
+*The following assumes you are operating within the `hardhat` directory*
+
+The directory follows a standard hardhat file structure:
 * `contracts`: Your Solidity smart contracts
 * `scripts`: Scripts to run against your smart contracts or to deploy your smart contracts
-* `typechain`: The generated types for your smart contracts
 * `test`: Chai testing suite 
 * `hardhat.config.ts`: Hardhat configuration file - can add new networks in here
+* `../artifacts`: A directory containing artifacts of your compiled and deployed contracts, including `typechain`.
 
 ### Contracts
-First create your smart contracts within the `contracts` directory. An example `Greeter.sol` is provided. You can compile all contracts within `contracts` by running `hh compile` from the root. This will generate the typechain typing.
+First create your smart contracts within the `contracts` directory. An example `Greeter.sol` is provided. You can compile all contracts within `contracts` by running `hh compile`. This will generate the typechain typing within `../artifacts/typechain`.
 
 ### Local Deployment
 Hardhat allows you to run a localhost EVM chain which you can deploy your contracts to for testing. To run the EVM chain, execute `hh node` in a seperate terminal.
@@ -41,21 +45,21 @@ hh run --network localhost scripts/deploy.ts
 
 Currently this script is set to just deploy the `Greeter.sol` contract. To deploy your other contracts, you'll need to add them into the `deploy.ts` script - just follow the pattern seen for `Greeter`.
 
-The `deploy.ts` script will also update a JSON metadata file within the `nextjs` project with information about the deployed contracts. This occurs during:
+The `deploy.ts` script will also update a JSON metadata file within the `../artifacts` directory with information about the deployed contracts. This occurs during:
 ```js
 updateDeployedContractData("Greeter", chainId, greeter.address)
 ```
 
-For each contract you deploy, you should run this function to ensure the frontend has the most recently instance of your contracts.
+For each contract you deploy, you should run this function to ensure the frontend has the most recent instance of your contracts.
 
-This will also generate the contract JSON ABI within `nextjs/resources/hardhat/artifacts`, which is then used by the frontend to connect with the contracts.
+This will also generate the contract JSON ABI within `../artifacts/hardhat`, which is then used by the frontend to connect with the contracts.
 
 ### Testing
-You should ofcourse test all your Smart Contracts. This can be done by adding new scripts to the `test` directory. Copy the pattern shown in `index.ts` to get started.
+You should, ofcourse, test all your Smart Contracts. This can be done by adding new scripts to the `test` directory. Copy the pattern shown in `index.ts` to get started. You can run these tests with `hh test`.
 
 ## Front End
 ### Chain/Contract Interactions
-The front end uses the user's ethereum provider (metamask) to interact with smart contracts, or a default provider if a user does no have a provider installed/connected (view only though). 
+The front end uses the user's ethereum provider (metamask/walletconnect) to interact with smart contracts, or a default provider if a user does no have a provider installed/connected (view only though).
 
 A custom hook has been written within `core/ethereum.ts`, `useDappStatus()` to provide core automatically updating variables and functions required for DApps.
 The `useDappStatus` hook provides the following:
